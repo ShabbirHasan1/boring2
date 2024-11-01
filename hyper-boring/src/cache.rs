@@ -1,6 +1,6 @@
-use boring_imp::ssl::SslVersion;
-use boring_imp::ssl::{SslSession, SslSessionRef};
 use linked_hash_set::LinkedHashSet;
+use rboring::ssl::SslVersion;
+use rboring::ssl::{SslSession, SslSessionRef};
 use std::borrow::Borrow;
 use std::collections::hash_map::{Entry, HashMap};
 use std::hash::{Hash, Hasher};

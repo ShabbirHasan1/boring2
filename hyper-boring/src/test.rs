@@ -1,10 +1,10 @@
 use super::*;
-use boring_imp::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use futures::StreamExt;
 use hyper::client::HttpConnector;
 use hyper::server::conn::Http;
 use hyper::{service, Response};
 use hyper::{Body, Client};
+use rboring::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use tokio::net::TcpListener;
 
 #[tokio::test]
@@ -44,7 +44,7 @@ async fn localhost() {
 
         for _ in 0..3 {
             let stream = listener.accept().await.unwrap().0;
-            let stream = tokio_boring_imp::accept(&acceptor, stream).await.unwrap();
+            let stream = tokio_rboring::accept(&acceptor, stream).await.unwrap();
 
             let service =
                 service::service_fn(|_| async { Ok::<_, io::Error>(Response::new(Body::empty())) });
@@ -87,7 +87,7 @@ async fn localhost() {
 
 #[tokio::test]
 async fn alpn_h2() {
-    use boring_imp::ssl::{self, AlpnError};
+    use rboring::ssl::{self, AlpnError};
 
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let port = listener.local_addr().unwrap().port();
@@ -106,7 +106,7 @@ async fn alpn_h2() {
         let acceptor = acceptor.build();
 
         let stream = listener.accept().await.unwrap().0;
-        let stream = tokio_boring_imp::accept(&acceptor, stream).await.unwrap();
+        let stream = tokio_rboring::accept(&acceptor, stream).await.unwrap();
         assert_eq!(stream.ssl().selected_alpn_protocol().unwrap(), b"h2");
 
         let service =

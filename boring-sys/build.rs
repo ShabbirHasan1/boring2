@@ -1,6 +1,3 @@
-#[cfg(feature = "old_bindgen")]
-use old_bindgen as bindgen;
-
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -413,10 +410,6 @@ fn main() {
 
         let mut cfg = get_boringssl_cmake_config();
 
-        if cfg!(feature = "fuzzing") {
-            cfg.cxxflag("-DBORINGSSL_UNSAFE_DETERMINISTIC_MODE")
-                .cxxflag("-DBORINGSSL_UNSAFE_FUZZER_MODE");
-        }
         if cfg!(feature = "fips") {
             let (clang, clangxx) = verify_fips_clang_version();
             cfg.define("CMAKE_C_COMPILER", clang);
@@ -476,25 +469,13 @@ fn main() {
         .layout_tests(true)
         .prepend_enum_name(true)
         .clang_args(get_extra_clang_args_for_bindgen())
-        .clang_args(&["-I", &include_path]);
-
-    #[cfg(feature = "old_bindgen")]
-    {
-        builder = builder
-            .default_enum_style(bindgen::EnumVariation::NewType { is_bitfield: false })
-            .rustfmt_bindings(true);
-    }
-
-    #[cfg(not(feature = "old_bindgen"))]
-    {
-        builder = builder
-            .default_enum_style(bindgen::EnumVariation::NewType {
-                is_bitfield: false,
-                is_global: false,
-            })
-            // Not supported by bindgen on all targets, not used by BoringSSL
-            .blocklist_type("max_align_t");
-    }
+        .clang_args(&["-I", &include_path])
+        .default_enum_style(bindgen::EnumVariation::NewType {
+            is_bitfield: false,
+            is_global: false,
+        })
+        // Not supported by bindgen on all targets, not used by BoringSSL
+        .blocklist_type("max_align_t");
 
     let target = std::env::var("TARGET").unwrap();
     match target.as_ref() {

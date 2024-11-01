@@ -1,19 +1,19 @@
 //! A program that generates ca certs, certs verified by the ca, and public
 //! and private keys.
 
-extern crate boring_imp;
+extern crate rboring;
 
-use boring_imp::asn1::Asn1Time;
-use boring_imp::bn::{BigNum, MsbOption};
-use boring_imp::error::ErrorStack;
-use boring_imp::hash::MessageDigest;
-use boring_imp::pkey::{PKey, PKeyRef, Private};
-use boring_imp::rsa::Rsa;
-use boring_imp::x509::extension::{
+use rboring::asn1::Asn1Time;
+use rboring::bn::{BigNum, MsbOption};
+use rboring::error::ErrorStack;
+use rboring::hash::MessageDigest;
+use rboring::pkey::{PKey, PKeyRef, Private};
+use rboring::rsa::Rsa;
+use rboring::x509::extension::{
     AuthorityKeyIdentifier, BasicConstraints, KeyUsage, SubjectAlternativeName,
     SubjectKeyIdentifier,
 };
-use boring_imp::x509::{X509NameBuilder, X509Ref, X509Req, X509ReqBuilder, X509VerifyResult, X509};
+use rboring::x509::{X509NameBuilder, X509Ref, X509Req, X509ReqBuilder, X509VerifyResult, X509};
 
 /// Make a CA certificate and private key
 fn mk_ca_cert() -> Result<(X509, PKey<Private>), ErrorStack> {

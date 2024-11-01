@@ -3,11 +3,6 @@
 
 pub use crate::cache::{SessionCache, SessionKey};
 use antidote::Mutex;
-use boring_imp::error::ErrorStack;
-use boring_imp::ex_data::Index;
-use boring_imp::ssl::{
-    ConnectConfiguration, Ssl, SslConnector, SslConnectorBuilder, SslMethod, SslSessionCacheMode,
-};
 use http::uri::Scheme;
 use hyper::client::connect::{Connected, Connection};
 #[cfg(feature = "runtime")]
@@ -15,6 +10,11 @@ use hyper::client::HttpConnector;
 use hyper::service::Service;
 use hyper::Uri;
 use once_cell::sync::OnceCell;
+use rboring::error::ErrorStack;
+use rboring::ex_data::Index;
+use rboring::ssl::{
+    ConnectConfiguration, Ssl, SslConnector, SslConnectorBuilder, SslMethod, SslSessionCacheMode,
+};
 use std::fmt::Debug;
 use std::future::Future;
 use std::io;
@@ -24,7 +24,7 @@ use std::sync::Arc;
 use std::task::{Context, Poll};
 use std::{error::Error, fmt};
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
-use tokio_boring_imp::SslStream;
+use tokio_rboring::SslStream;
 use tower_layer::Layer;
 
 mod cache;
@@ -274,7 +274,7 @@ where
             }
 
             let config = inner.setup_ssl(&uri, host)?;
-            let stream = tokio_boring_imp::connect(config, host, conn).await?;
+            let stream = tokio_rboring::connect(config, host, conn).await?;
 
             Ok(MaybeHttpsStream::Https(stream))
         };
