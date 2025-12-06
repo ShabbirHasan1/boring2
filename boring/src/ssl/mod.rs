@@ -69,7 +69,7 @@ use std::io;
 use std::io::prelude::*;
 use std::marker::PhantomData;
 use std::mem::{self, ManuallyDrop, MaybeUninit};
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 use std::panic::resume_unwind;
 use std::path::Path;
 use std::ptr::{self, NonNull};
@@ -2346,7 +2346,8 @@ impl ClientHello<'_> {
 }
 
 /// Information about a cipher.
-pub struct SslCipher(*mut ffi::SSL_CIPHER);
+#[derive(Clone, Copy)]
+pub struct SslCipher(&'static SslCipherRef);
 
 impl SslCipher {
     #[corresponds(SSL_get_cipher_by_value)]
@@ -2373,12 +2374,12 @@ unsafe impl ForeignType for SslCipher {
 
     #[inline]
     unsafe fn from_ptr(ptr: *mut ffi::SSL_CIPHER) -> SslCipher {
-        SslCipher(ptr)
+        SslCipher(SslCipherRef::from_ptr(ptr))
     }
 
     #[inline]
     fn as_ptr(&self) -> *mut ffi::SSL_CIPHER {
-        self.0
+        self.0.as_ptr()
     }
 }
 
@@ -2386,13 +2387,7 @@ impl Deref for SslCipher {
     type Target = SslCipherRef;
 
     fn deref(&self) -> &SslCipherRef {
-        unsafe { SslCipherRef::from_ptr(self.0) }
-    }
-}
-
-impl DerefMut for SslCipher {
-    fn deref_mut(&mut self) -> &mut SslCipherRef {
-        unsafe { SslCipherRef::from_ptr_mut(self.0) }
+        self.0
     }
 }
 
@@ -2401,11 +2396,21 @@ impl DerefMut for SslCipher {
 /// [`SslCipher`]: struct.SslCipher.html
 pub struct SslCipherRef(Opaque);
 
+unsafe impl Send for SslCipherRef {}
+unsafe impl Sync for SslCipherRef {}
+
 unsafe impl ForeignTypeRef for SslCipherRef {
     type CType = ffi::SSL_CIPHER;
 }
 
 impl SslCipherRef {
+    /// Returns the IANA number of the cipher.
+    #[corresponds(SSL_CIPHER_get_protocol_id)]
+    #[must_use]
+    pub fn protocol_id(&self) -> u16 {
+        unsafe { ffi::SSL_CIPHER_get_protocol_id(self.as_ptr()) }
+    }
+
     /// Returns the name of the cipher.
     #[corresponds(SSL_CIPHER_get_name)]
     #[must_use]
@@ -3038,7 +3043,7 @@ impl SslRef {
     ///
     /// On the client side, the chain includes the leaf certificate, but on the server side it does
     /// not. Fun!
-    #[corresponds(SSL_get_peer_certificate)]
+    #[corresponds(SSL_get_peer_cert_chain)]
     #[must_use]
     pub fn peer_cert_chain(&self) -> Option<&StackRef<X509>> {
         unsafe {
