@@ -2,7 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/boring2.svg)](https://crates.io/crates/boring2)
 
-BoringSSL bindings for the Rust programming language and HTTP client for [wreq](https://github.com/0x676e67/wreq) built on top of it.
+BoringSSL bindings for the Rust programming language.
 
 ## Non-goals
 
