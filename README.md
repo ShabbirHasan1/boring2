@@ -2,16 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/boring2.svg)](https://crates.io/crates/boring2)
 
-BoringSSL bindings for the Rust programming language.
-
-## Non-goals
-
-This package implements only the TLS extensions specification and supports the original [boring](https://github.com/cloudflare/boring) library with the following features:
-
-- RPK is not supported
-- Required TLS extensions for Safari and Firefox
-- kDHE, ffdhe2048, and ffdhe3072 implementations
-- Support for LoongArch P64 and P32 architectures
+BoringSSL bindings for the Rust programming language and TLS adapters for [tokio](https://github.com/tokio-rs/tokio).
 
 ## Documentation
  - Boring API: <https://docs.rs/boring2>
