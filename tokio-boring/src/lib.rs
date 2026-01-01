@@ -4,7 +4,7 @@
 //! that works with with [`tokio`]'s [`AsyncRead`] and [`AsyncWrite`] traits rather than std's
 //! blocking [`Read`] and [`Write`] traits.
 //!
-//! This file reimplements tokio-boring with the [overhauled](https://github.com/sfackler/tokio-openssl/commit/56f6618ab619f3e431fa8feec2d20913bf1473aa)
+//! This file reimplements tokio-boring2 with the [overhauled](https://github.com/sfackler/tokio-openssl/commit/56f6618ab619f3e431fa8feec2d20913bf1473aa)
 //! tokio-openssl interface while the tokio APIs from official [boring] crate is not yet caught up
 //! to it.
 
