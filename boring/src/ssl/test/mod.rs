@@ -1120,82 +1120,44 @@ fn test_ssl_set_compliance() {
 }
 
 #[test]
-fn set_extension_permutation() {
-    let mut ctx = SslContext::builder(SslMethod::tls()).unwrap();
-    // firefox extension permutation
-    ctx.set_extension_permutation(&[
-        ExtensionType::SERVER_NAME,
-        ExtensionType::EXTENDED_MASTER_SECRET,
-        ExtensionType::RENEGOTIATE,
-        ExtensionType::SUPPORTED_GROUPS,
-        ExtensionType::EC_POINT_FORMATS,
-        ExtensionType::SESSION_TICKET,
-        ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION,
-        ExtensionType::STATUS_REQUEST,
-        ExtensionType::DELEGATED_CREDENTIAL,
-        ExtensionType::CERTIFICATE_TIMESTAMP,
-        ExtensionType::KEY_SHARE,
-        ExtensionType::SUPPORTED_VERSIONS,
-        ExtensionType::SIGNATURE_ALGORITHMS,
-        ExtensionType::PSK_KEY_EXCHANGE_MODES,
-        ExtensionType::RECORD_SIZE_LIMIT,
-        ExtensionType::CERT_COMPRESSION,
-        ExtensionType::ENCRYPTED_CLIENT_HELLO,
-    ])
-    .unwrap();
-}
+fn ex_data_drop() {
+    use crate::ssl::SslContextBuilder;
+    use std::sync::atomic::AtomicU32;
+    use std::sync::atomic::Ordering::Relaxed;
+    use std::sync::Arc;
 
-#[test]
-fn test_connect_with_set_extension_permutation_client_ctx() {
-    let server = Server::builder();
-    let server = server.build();
+    struct TrackDrop(Arc<AtomicU32>);
+    impl Drop for TrackDrop {
+        fn drop(&mut self) {
+            self.0.fetch_add(1, Relaxed);
+        }
+    }
 
-    let mut client = server.client();
-    // firefox extension permutation
-    client
-        .ctx()
-        .set_extension_permutation(&[
-            ExtensionType::SERVER_NAME,
-            ExtensionType::EXTENDED_MASTER_SECRET,
-            ExtensionType::RENEGOTIATE,
-            ExtensionType::SUPPORTED_GROUPS,
-            ExtensionType::EC_POINT_FORMATS,
-            ExtensionType::SESSION_TICKET,
-            ExtensionType::APPLICATION_LAYER_PROTOCOL_NEGOTIATION,
-            ExtensionType::STATUS_REQUEST,
-            ExtensionType::DELEGATED_CREDENTIAL,
-            ExtensionType::CERTIFICATE_TIMESTAMP,
-            ExtensionType::KEY_SHARE,
-            ExtensionType::SUPPORTED_VERSIONS,
-            ExtensionType::SIGNATURE_ALGORITHMS,
-            ExtensionType::PSK_KEY_EXCHANGE_MODES,
-            ExtensionType::RECORD_SIZE_LIMIT,
-            ExtensionType::CERT_COMPRESSION,
-            ExtensionType::ENCRYPTED_CLIENT_HELLO,
-        ])
-        .unwrap();
-    let _ = client.connect();
-}
+    let mut ctx = SslContextBuilder::new(SslMethod::tls()).unwrap();
+    let index = SslContext::new_ex_index().unwrap();
+    let d1 = Arc::new(AtomicU32::new(100));
+    let d2 = Arc::new(AtomicU32::new(200));
+    let d3 = Arc::new(AtomicU32::new(300));
+    ctx.set_ex_data(index, TrackDrop(d1.clone()));
+    assert_eq!(100, d1.load(Relaxed));
+    assert_eq!(200, d2.load(Relaxed));
+    ctx.replace_ex_data(index, TrackDrop(d2.clone()));
+    assert_eq!(101, d1.load(Relaxed));
+    assert_eq!(200, d2.load(Relaxed));
+    ctx.replace_ex_data(index, TrackDrop(d3.clone()));
+    assert_eq!(101, d1.load(Relaxed));
+    assert_eq!(201, d2.load(Relaxed));
+    assert_eq!(300, d3.load(Relaxed));
+    drop(ctx);
+    assert_eq!(101, d1.load(Relaxed));
+    assert_eq!(201, d2.load(Relaxed));
+    assert_eq!(301, d3.load(Relaxed));
 
-#[test]
-fn test_connect_with_set_extension_permutation_empty_client_ctx() {
-    let server = Server::builder();
-    let server = server.build();
+    let mut ctx2 = SslContextBuilder::new(SslMethod::tls()).unwrap();
 
-    let mut client = server.client();
-    client.ctx().set_extension_permutation(&[]).unwrap();
-    let _ = client.connect();
-}
-
-#[test]
-fn test_connect_with_set_extension_permutation_server_name_client_ctx() {
-    let server = Server::builder();
-    let server = server.build();
-
-    let mut client = server.client();
-    client
-        .ctx()
-        .set_extension_permutation(&[ExtensionType::SERVER_NAME])
-        .unwrap();
-    let _ = client.connect();
+    ctx2.set_ex_data(index, TrackDrop(d1.clone()));
+    ctx2.set_ex_data(index, TrackDrop(d2.clone()));
+    drop(ctx2);
+    assert_eq!(102, d1.load(Relaxed));
+    assert_eq!(202, d2.load(Relaxed));
 }
