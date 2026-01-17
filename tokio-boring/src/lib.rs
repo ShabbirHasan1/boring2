@@ -270,6 +270,7 @@ where
     }
 }
 
+#[cfg(test)]
 #[tokio::test]
 async fn test_google() {
     use std::{net::ToSocketAddrs, pin::Pin};
